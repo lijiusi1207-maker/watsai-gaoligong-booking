@@ -1,0 +1,23 @@
+# Render 一键部署蓝图
+# 用法：Render 控制台 → New → Blueprint → 连接本仓库 → Apply
+# 详见 README「部署到 Render」一节。
+services:
+  - type: web
+    name: gaoligong-booking
+    runtime: node
+    plan: free
+    # 节点区域：singapore 离国内更近；oregon 免费额度更稳。按需改。
+    region: singapore
+    branch: main
+    # 零依赖纯 Node，无需构建
+    buildCommand: "echo 'no build needed'"
+    startCommand: "node 服务器.js"
+    # 健康检查走 /healthz（服务器.js 已提供）
+    healthCheckPath: /healthz
+    # PORT 由 Render 自动注入，服务器.js 已支持 process.env.PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
+      - key: ADMIN_TOKEN
+        generateValue: true
+
