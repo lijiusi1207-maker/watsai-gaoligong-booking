@@ -1,0 +1,16 @@
+{
+  "name": "watsai-gaoligong-booking",
+  "version": "1.0.0",
+  "description": "哇噻·高黎贡·自然纪 预约小程序后端（纯 Node 零依赖：静态托管 + REST API + SSE 实时）",
+  "main": "服务器.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node 服务器.js",
+    "seed": "node 研学计划种子.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
+}
+
