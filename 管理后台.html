@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>运营后台 · 哇噻·高黎贡·自然纪</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--green:#2f7d4f;--gold:#c79a3a;--bg:#f4f6f4;--card:#fff;--mut:#8a968e;--line:#e6ebe8}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:#1f2a23;padding:16px;max-width:1100px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+  .login{max-width:360px;margin:80px auto;background:var(--card);padding:26px;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+  .login input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;margin:8px 0;font-size:15px}
+  .login .btn{background:var(--green);color:#fff;border:none;padding:12px;width:100%;border-radius:10px;font-size:15px;margin-top:8px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 16px;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .topbar .live{font-size:12px;color:var(--mut)}
+  .topbar .live b{color:var(--green)}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{background:var(--card);border:1px solid var(--line);padding:9px 16px;border-radius:20px;font-size:14px;cursor:pointer;color:#445}
+  .tabs button.active{background:var(--green);color:#fff;border-color:var(--green)}
+  .panel{display:none;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:16px}
+  .panel.active{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:linear-gradient(135deg,#fff,#f0f6f1);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .kpi .n{font-size:24px;font-weight:700;color:var(--green)}
+  .kpi .l{font-size:12px;color:var(--mut);margin-top:2px}
+  .sec{font-size:14px;font-weight:600;margin:6px 0 10px;padding-left:9px;border-left:3px solid var(--green)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;background:#fafbfa}
+  .btn{padding:7px 13px;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+  .btn.primary{background:var(--green);color:#fff}
+  .btn.gold{background:var(--gold);color:#fff}
+  .btn.ghost{background:#eef2ef;color:#445}
+  .btn.danger{background:#e74c3c;color:#fff}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  .verify-box{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .verify-box input{padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:monospace;flex:1;min-width:200px;text-transform:uppercase}
+  .badge{padding:2px 9px;border-radius:10px;font-size:12px}
+  .badge.on{background:#e6f5ec;color:var(--green)}
+  .badge.off{background:#eee;color:#999}
+  .badge.pending{background:#fff3e0;color:#c47f14}
+  .badge.verified{background:#e6f5ec;color:var(--green)}
+  .filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .filters input,.filters select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+  .bar{height:10px;border-radius:6px;background:var(--green);margin-top:4px}
+  .barwrap{margin:6px 0}
+  .barwrap small{font-size:12px;color:var(--mut)}
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-mask.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:420px;padding:22px}
+  .modal .field{margin-bottom:10px}
+  .modal .field label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+  .modal .field input,.modal .field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px}
+  .modal .btn{width:100%;margin-top:8px}
+  .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;z-index:99;opacity:0;transition:.25s}
+  .toast.show{opacity:1}
+  .empty{color:var(--mut);text-align:center;padding:24px;font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login">
+  <h1>运营后台登录</h1>
+  <p class="sub" style="margin:6px 0 12px">请输入部署环境中的 `ADMIN_TOKEN`</p>
+  <input id="adminPwd" type="password" placeholder="后台口令">
+  <button class="btn" data-act="doLogin">进入后台</button>
+</div>
+
+<div id="mainView" style="display:none">
+  <div class="topbar">
+    <div><h1 style="font-size:18px">哇噻·高黎贡·自然纪 · 运营后台</h1><div class="sub" style="margin:0">预约 · 活动 · 核销 · 数据</div></div>
+    <div style="text-align:right">
+      <div class="live">实时连接：<b id="liveState">连接中…</b></div>
+      <div class="sub" style="margin:0"><span data-act="reload" style="cursor:pointer;color:var(--green)">🔄 刷新</span> · <span data-act="doLogout" style="cursor:pointer;color:#c0392b">退出</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="active" data-act="tab" data-tab="overview">📊 概览</button>
+    <button data-act="tab" data-tab="verify">✅ 核销端口</button>
+    <button data-act="tab" data-tab="booking">🎟️ 预约管理</button>
+    <button data-act="tab" data-tab="activity">🎛️ 活动管理</button>
+    <button data-act="tab" data-tab="user">👥 用户管理</button>
+    <button data-act="tab" data-tab="contest">📸 大赛管理</button>
+    <button data-act="tab" data-tab="export">⬇ 导出</button>
+  </div>
+
+  <!-- 概览 -->
+  <div class="panel active" id="p-overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="sec">选举票数分布</div>
+    <div id="deanBars"></div>
+    <div class="sec" style="margin-top:14px">预约类型占比</div>
+    <div id="typeBars"></div>
+  </div>
+
+  <!-- 核销端口 -->
+  <div class="panel" id="p-verify">
+    <div class="sec">凭证核销</div>
+    <div class="verify-box">
+      <input id="verifyCode" placeholder="输入/扫描凭证码，如 YX-ABC123">
+      <button class="btn primary" data-act="doVerify">核销</button>
+    </div>
+    <div class="sec">待核销清单（点击直接核销）</div>
+    <table><thead><tr><th>凭证码</th><th>活动</th><th>姓名</th><th>场次</th><th>操作</th></tr></thead>
+      <tbody id="pendingBody"></tbody></table>
+    <div class="sec" style="margin-top:16px">核销日志</div>
+    <table><thead><tr><th>时间</th><th>凭证码</th><th>活动</th><th>姓名</th><th>操作员</th></tr></thead>
+      <tbody id="verifyLogBody"></tbody></table>
+  </div>
+
+  <!-- 预约管理 -->
+  <div class="panel" id="p-booking">
+    <div class="filters">
+      <select id="fType"><option value="">全部类型</option><option value="yanxue">研学</option><option value="mianpiao">免票</option></select>
+      <select id="fStatus"><option value="">全部状态</option><option value="pending">待核销</option><option value="verified">已核销</option></select>
+      <input id="fKw" placeholder="姓名/凭证码">
+      <button class="btn ghost sm" data-act="resetFilters">重置</button>
+      <button class="btn primary sm" data-act="exportBookings">⬇ 导出筛选</button>
+    </div>
+    <table><thead><tr><th>凭证码</th><th>类型</th><th>活动</th><th>场次</th><th>姓名</th><th>身份证</th><th>监护人</th><th>状态</th><th>时间</th></tr></thead>
+      <tbody id="bookBody"></tbody></table>
+  </div>
+
+  <!-- 活动管理 -->
+  <div class="panel" id="p-activity">
+    <button class="btn gold" data-act="openNewAct" style="margin-bottom:12px">＋ 新建活动</button>
+    <table><thead><tr><th>活动</th><th>类型</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="actBody"></tbody></table>
+  </div>
+
+  <!-- 用户管理 -->
+  <div class="panel" id="p-user">
+    <button class="btn ghost sm" data-act="exportUsers" style="margin-bottom:12px">⬇ 导出注册用户</button>
+    <table><thead><tr><th>手机号</th><th>姓名</th><th>身份证</th><th>性别</th><th>年龄</th><th>监护人</th><th>注册时间</th></tr></thead>
+      <tbody id="userBody"></tbody></table>
+  </div>
+
+  <!-- 大赛管理 -->
+  <div class="panel" id="p-contest">
+    <div class="sec">自然记录大赛 · 作品列表（点击切换优胜）</div>
+    <table><thead><tr><th>作者</th><th>标题</th><th>类型</th><th>优胜</th><th>操作</th></tr></thead>
+      <tbody id="contestBody"></tbody></table>
+  </div>
+
+  <!-- 导出 -->
+  <div class="panel" id="p-export">
+    <div class="sec">一键导出 CSV（已含 UTF-8 BOM，Excel 不乱码）</div>
+    <button class="btn primary" data-act="exp" data-type="bookings">🎟️ 预约数据</button>
+    <button class="btn primary" data-act="exp" data-type="users">👥 注册用户</button>
+    <button class="btn primary" data-act="exp" data-type="dean">🗳️ 选举数据</button>
+    <button class="btn primary" data-act="exp" data-type="contest">📸 大赛数据</button>
+    <button class="btn primary" data-act="exp" data-type="verify">✅ 核销日志</button>
+  </div>
+</div>
+
+<!-- 新建活动弹窗 -->
+<div class="modal-mask" id="actModal">
+  <div class="modal">
+    <h3>新建 / 从模板添加活动</h3>
+    <div class="field"><label>选择模板（可选，自动填充，需要时直接改）</label>
+      <select id="na-tpl"><option value="">— 空白活动 —</option></select></div>
+    <div class="field"><label>类型</label><select id="na-type">
+      <option value="yanxue">研学</option><option value="mianpiao">免票</option><option value="dean">名誉院长选举</option><option value="contest">自然记录大赛</option></select></div>
+    <div class="field"><label>标题</label><input id="na-title" placeholder="活动标题"></div>
+    <div class="field"><label>一句话描述</label><input id="na-desc" placeholder="一句话描述"></div>
+    <div class="field"><label>图标 emoji</label><input id="na-emoji" value="📌"></div>
+    <div class="field"><label>地点 / 集合点</label><input id="na-location" placeholder="如：园区东门自然教室"></div>
+    <div class="field"><label>名额（可留空=不限）</label><input id="na-capacity" placeholder="如：30 人/场"></div>
+    <div class="field"><label>报名截止</label><input id="na-deadline" placeholder="如：7/15 18:00 或 活动前1天"></div>
+    <div class="field"><label>规则 / 注意事项 / 材料费说明</label><textarea id="na-rules" rows="2" placeholder="如：含材料费、需自备水杯"></textarea></div>
+    <div class="field"><label>标签（逗号分隔）</label><input id="na-tags" placeholder="如：亲子,户外,半日"></div>
+
+    <div class="field" id="na-yanxue" style="display:none">
+      <label>研学场次（每行一个，格式：日期 时段）</label>
+      <textarea id="na-sessions" rows="4" placeholder="7/18 上午&#10;7/18 下午"></textarea></div>
+    <div class="field" id="na-mianpiao" style="display:none">
+      <label>免票可选日期（每行一个）</label>
+      <textarea id="na-days" rows="3" placeholder="本周六&#10;本周日"></textarea></div>
+    <div class="field" id="na-dean" style="display:none">
+      <label>候选人（每行：姓名|emoji|简介）</label>
+      <textarea id="na-cands" rows="4" placeholder="候选人 A|🧑|自然教育爱好者"></textarea></div>
+    <div class="field" id="na-contest" style="display:none">
+      <label>作品类型</label><select id="na-ctype"><option value="both">照片 + 视频</option><option value="photo">仅照片</option><option value="video">仅视频</option></select>
+      <label style="margin-top:6px">奖项说明</label><input id="na-award" placeholder="如：优胜获专属服装 + 2月名誉院长"></div>
+
+    <button class="btn gold" data-act="doNewAct">创建并上架</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let TOKEN=localStorage.getItem('glg_admin_token')||'';
+let MODE='local', DATA=null, SSE=null;
+function $(id){return document.getElementById(id);}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900);}
+async function api(path,body){const opt={headers:{'Content-Type':'application/json'}};if(body){opt.method='POST';opt.body=JSON.stringify({...body,token:TOKEN});}else if(path.startsWith('/api/admin/'))path+=(path.includes('?')?'&':'?')+'token='+encodeURIComponent(TOKEN);const r=await fetch(path,opt);return await r.json();}
+function lsGet(){try{return JSON.parse(localStorage.getItem('glg_booking_v2'))||{users:[],bookings:[],activities:[],votes:[],contests:[],verifyLog:[],currentUid:null}}catch(e){return{users:[],bookings:[],activities:[],votes:[],contests:[],verifyLog:[],currentUid:null};}}
+function lsSet(d){localStorage.setItem('glg_booking_v2',JSON.stringify(d));}
+// 本地（无后端）模式下的管理操作
+function localVerify(code){const d=lsGet();const b=d.bookings.find(x=>x.code.toUpperCase()===code);if(!b)return{ok:false,error:'凭证码不存在'};if(b.status==='verified')return{ok:false,error:'该凭证已核销'};b.status='verified';b.verifiedAt=Date.now();d.verifyLog.push({code:b.code,actTitle:b.actTitle,name:b.name,at:Date.now(),operator:'local'});lsSet(d);return{ok:true,booking:b};}
+function localToggle(id){const d=lsGet();const a=d.activities.find(x=>x.id===id);if(a)a.status=a.status==='online'?'offline':'online';lsSet(d);}
+function localDel(id){const d=lsGet();d.activities=d.activities.filter(x=>x.id!==id);lsSet(d);}
+function localNewAct(b){const d=lsGet();d.activities.push({id:'act_'+Math.random().toString(36).slice(2,9),type:b.type,title:b.title,emoji:b.emoji,desc:b.desc,location:b.location||'',capacity:b.capacity||'',deadline:b.deadline||'',rules:b.rules||'',tags:b.tags||'',status:'online',config:b.config||{}});lsSet(d);}
+function localExportCsv(type){
+  const d=lsGet();let header=[],rows=[];
+  if(type==='bookings'){header=['凭证码','类型','活动','场次/日期','姓名','脱敏身份证','监护人','状态','预约时间','核销时间'];rows=d.bookings.map(b=>[b.code,b.type,b.actTitle,b.date,b.name,b.idMask,b.guardian?b.guardian.name:'',b.status,new Date(b.createdAt).toLocaleString(),b.verifiedAt?new Date(b.verifiedAt).toLocaleString():'']);}
+  else if(type==='users'){header=['手机号','姓名','脱敏身份证','性别','年龄','监护人','注册时间'];rows=d.users.map(u=>[u.phone,u.name,u.idMask,u.gender,u.age,u.guardian?u.guardian.name:'',new Date(u.createdAt).toLocaleString()]);}
+  else if(type==='dean'){header=['候选人','票数'];const a=d.activities.find(x=>x.type==='dean');rows=a?a.config.cands.map(c=>[c.name,d.votes.filter(v=>v.candId===c.id).length]):[];}
+  else if(type==='contest'){header=['作品ID','作者','标题','类型','优胜','时间'];rows=d.contests.map(c=>[c.id,c.name,c.title,c.mediaType,c.isWinner?'是':'否',new Date(c.at).toLocaleString()]);}
+  else if(type==='verify'){header=['凭证码','活动','姓名','核销时间','操作员'];rows=d.verifyLog.map(v=>[v.code,v.actTitle,v.name,new Date(v.at).toLocaleString(),v.operator]);}
+  const csv='\ufeff'+[header,...rows].map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=type+'.csv';a.click();toast('开始导出 '+type);
+}
+async function mutate(path,body){
+  if(MODE==='api'){const r=await api(path,body);if(r.ok)await loadData();return r;}
+  if(path==='/api/admin/verify'){const r=localVerify(body.code);if(r.ok)await loadData();return r;}
+  if(path==='/api/admin/activity'){if(body.action==='toggle')localToggle(body.id);else if(body.action==='delete')localDel(body.id);else if(body.action==='create')localNewAct(body);await loadData();return{ok:true};}
+  return{ok:false,error:'不支持'};
+}
+
+async function loadData(){
+  if(MODE==='api'){const r=await api('/api/admin/data');if(r.ok){DATA=r;renderAll();return;}}
+  // local fallback
+  const d=lsGet();
+  DATA={stats:{totalUsers:d.users.length,totalBookings:d.bookings.length,pending:d.bookings.filter(b=>b.status==='pending').length,verified:d.bookings.filter(b=>b.status==='verified').length,yanxue:d.bookings.filter(b=>b.type==='yanxue').length,mianpiao:d.bookings.filter(b=>b.type==='mianpiao').length,onlineActs:d.activities.filter(a=>a.status==='online').length,totalActs:d.activities.length,deanVotes:d.votes.length,contestWorks:d.contests.length,winners:d.contests.filter(c=>c.isWinner).length,verifyCount:d.verifyLog.length},users:d.users,bookings:d.bookings,activities:d.activities,votes:d.votes,contests:d.contests,verifyLog:d.verifyLog,deanTally:[]};
+  renderAll();
+}
+function renderAll(){renderKpis();renderDean();renderVerify();renderBookings();renderActs();renderUsers();renderContest();}
+function renderContest(){
+  const list=(DATA.contests||[]).slice().reverse();
+  $('contestBody').innerHTML=list.length?list.map(c=>`<tr><td>${c.name||'-'}</td><td>${c.title||'-'}</td><td>${c.mediaType==='video'?'视频':'照片'}</td><td><b style="color:${c.isWinner?'var(--gold)':'#999'}">${c.isWinner?'🏆 优胜':'—'}</b></td><td><button class="btn sm ${c.isWinner?'ghost':'gold'}" data-act="toggleWinner" data-id="${c.id}">${c.isWinner?'取消优胜':'标为优胜'}</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">暂无作品</td></tr>';
+}
+
+function renderKpis(){
+  const s=DATA.stats;const items=[['注册用户',s.totalUsers],['总预约',s.totalBookings],['待核销',s.pending],['已核销',s.verified],['研学',s.yanxue],['免票',s.mianpiao],['上架活动',s.onlineActs+'/'+s.totalActs],['选举票数',s.deanVotes],['参赛作品',s.contestWorks],['优胜',s.winners],['核销日志',s.verifyCount]];
+  $('kpis').innerHTML=items.map(i=>`<div class="kpi"><div class="n">${i[1]}</div><div class="l">${i[0]}</div></div>`).join('');
+}
+function renderDean(){
+  const t=DATA.deanTally||[];const max=Math.max(1,...t.map(c=>c.votes));
+  $('deanBars').innerHTML=t.length?t.map(c=>`<div class="barwrap"><small>${c.emoji} ${c.name} — ${c.votes}票</small><div class="bar" style="width:${c.votes/max*100}%"></div></div>`).join(''):'<div class="empty">选举活动未配置或暂无票数</div>';
+  const y=DATA.bookings?DATA.bookings.filter(b=>b.type==='yanxue').length:0;const m=DATA.bookings?DATA.bookings.filter(b=>b.type==='mianpiao').length:0;const tot=y+m||1;
+  $('typeBars').innerHTML=`<div class="barwrap"><small>研学 ${y}</small><div class="bar" style="width:${y/tot*100}%"></div></div><div class="barwrap"><small>免票 ${m}</small><div class="bar" style="width:${m/tot*100}%"></div></div>`;
+}
+function renderVerify(){
+  const pend=(DATA.bookings||[]).filter(b=>b.status==='pending');
+  $('pendingBody').innerHTML=pend.length?pend.map(b=>`<tr><td><b>${b.code}</b></td><td>${b.actTitle}</td><td>${b.name}</td><td>${b.date||'-'}</td><td><button class="btn sm primary" data-act="verifyOne" data-code="${b.code}">核销</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">暂无待核销</td></tr>';
+  const log=(DATA.verifyLog||[]).slice().reverse().slice(0,30);
+  $('verifyLogBody').innerHTML=log.length?log.map(v=>`<tr><td>${new Date(v.at).toLocaleString()}</td><td>${v.code}</td><td>${v.actTitle}</td><td>${v.name}</td><td>${v.operator}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">暂无核销记录</td></tr>';
+}
+function renderBookings(){
+  const fT=$('fType').value,fS=$('fStatus').value,kw=$('fKw').value.trim().toLowerCase();
+  let rows=(DATA.bookings||[]).filter(b=>(!fT||b.type===fT)&&(!fS||b.status===fS)&&(!kw||b.name.toLowerCase().includes(kw)||b.code.toLowerCase().includes(kw)));
+  $('bookBody').innerHTML=rows.length?rows.slice().reverse().map(b=>`<tr><td><b>${b.code}</b></td><td>${b.type}</td><td>${b.actTitle}</td><td>${b.date||'-'}</td><td>${b.name}</td><td>${b.idMask||'-'}</td><td>${b.guardian?b.guardian.name:'-'}</td><td><span class="badge ${b.status}">${b.status==='verified'?'已核销':'待核销'}</span></td><td>${new Date(b.createdAt).toLocaleString()}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">无预约记录</td></tr>';
+}
+function renderActs(){
+  $('actBody').innerHTML=(DATA.activities||[]).map(a=>`<tr><td>${a.emoji} ${a.title}</td><td>${a.type}</td><td><span class="badge ${a.status==='online'?'on':'off'}">${a.status==='online'?'上架':'下架'}</span></td><td><button class="btn sm ${a.status==='online'?'ghost':'primary'}" data-act="toggleAct" data-id="${a.id}">${a.status==='online'?'下架':'上架'}</button> <button class="btn sm danger" data-act="delAct" data-id="${a.id}">删除</button></td></tr>`).join('');
+}
+function renderUsers(){
+  $('userBody').innerHTML=(DATA.users||[]).map(u=>`<tr><td>${u.phone}</td><td>${u.name}</td><td>${u.idMask||'-'}</td><td>${u.gender||'-'}</td><td>${u.age??'-'}</td><td>${u.guardian?u.guardian.name:'-'}</td><td>${new Date(u.createdAt).toLocaleString()}</td></tr>`).join('');
+}
+
+// 实时连接
+function connectSSE(){
+  if(MODE!=='api')return;
+  try{
+    SSE=new EventSource('/api/stream?token='+TOKEN);
+    SSE.onopen=()=>{$('liveState').textContent='● 已连接';$('liveState').style.color='var(--green)';};
+    SSE.onmessage=()=>{loadData();};
+    SSE.onerror=()=>{$('liveState').textContent='○ 重连中…';$('liveState').style.color='#c0392b';setTimeout(connectSSE,3000);};
+  }catch(e){}
+}
+
+// 事件委托
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;const act=t.dataset.act;
+  if(act==='doLogin'){const p=$('adminPwd').value.trim();if(!p){toast('请输入后台口令');return;}TOKEN=p;localStorage.setItem('glg_admin_token',TOKEN);if(MODE==='api'){const check=await api('/api/admin/data');if(!check.ok){toast(check.error||'口令错误');return;}}$('loginView').style.display='none';$('mainView').style.display='block';await loadData();connectSSE();}
+  if(act==='doLogout'){if(SSE)SSE.close();location.reload();}
+  if(act==='reload'){await loadData();toast('已刷新');}
+  if(act==='tab'){document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));t.classList.add('active');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$('p-'+t.dataset.tab).classList.add('active');}
+  if(act==='doVerify'){await verify($('verifyCode').value);}
+  if(act==='verifyOne'){await verify(t.dataset.code);}
+  if(act==='resetFilters'){$('fType').value='';$('fStatus').value='';$('fKw').value='';renderBookings();}
+  if(act==='exportBookings'){exportBookings();}
+  if(act==='exportUsers'){exportCsv('users');}
+  if(act==='exp'){exportCsv(t.dataset.type);}
+  if(act==='toggleAct'){await mutate('/api/admin/activity',{action:'toggle',id:t.dataset.id});toast('已切换上下架');}
+  if(act==='delAct'){if(!confirm('确认删除该活动？'))return;await mutate('/api/admin/activity',{action:'delete',id:t.dataset.id});toast('已删除');}
+  if(act==='openNewAct'){$('actModal').classList.add('show');}
+  if(act==='doNewAct'){
+    const type=$('na-type').value;
+    const config=buildActConfig(type);
+    await mutate('/api/admin/activity',{action:'create',type,title:$('na-title').value,desc:$('na-desc').value,emoji:$('na-emoji').value,location:$('na-location').value,capacity:$('na-capacity').value,deadline:$('na-deadline').value,rules:$('na-rules').value,tags:$('na-tags').value,config});
+    $('actModal').classList.remove('show');toast('活动已创建并上架');
+  }
+  if(act==='toggleWinner'){await toggleWinner(t.dataset.id);}
+});
+['fType','fStatus','fKw'].forEach(id=>$(id).addEventListener('input',renderBookings));
+$('actModal').addEventListener('click',e=>{if(e.target.id==='actModal')e.target.classList.remove('show');});
+
+// ---------- 活动模板（即用即添） ----------
+const ACT_TEMPLATES=[
+  {name:'周末研学活动（半日营）',type:'yanxue',emoji:'🎒',desc:'园区内自然研学半日营，含导览 + 手作体验',location:'园区自然教室',capacity:'30 人/场',deadline:'每周五 18:00',rules:'含材料费，需自备水杯；未成年须监护人陪同',tags:'研学,亲子,半日',config:{sessions:['7/18 上午','7/18 下午','7/19 上午','7/19 下午']}},
+  {name:'免票活动日',type:'mianpiao',emoji:'🎟️',desc:'免费预约进园名额，体验园区自然活动',location:'园区东门',capacity:'200 人/日',deadline:'活动前 1 天',rules:'免费进园，园内体验项目另付',tags:'免票,开放日',config:{days:['本周六','本周日']}},
+  {name:'名誉院长选举',type:'dean',emoji:'🗳️',desc:'投票选出名誉院长，当选获专属服装 + 2 月身份 + 进园全免费',location:'线上',capacity:'不限',deadline:'投票截止前',rules:'每位用户限投 1 票',tags:'选举,社区',config:{cands:[{id:'c1',name:'候选人 A',emoji:'🧑',bio:'自然教育爱好者'},{id:'c2',name:'候选人 B',emoji:'👩',bio:'亲子研学达人'},{id:'c3',name:'候选人 C',emoji:'🧓',bio:'生态摄影前辈'},{id:'c4',name:'候选人 D',emoji:'👨',bio:'户外领队'}]}},
+  {name:'自然记录大赛',type:'contest',emoji:'📸',desc:'上传自然照片/视频作品，优胜获专属服装 + 2 月名誉院长 + 进园全免费',location:'线上投稿',capacity:'不限',deadline:'投稿截止前',rules:'原创作品，严禁刷票',tags:'大赛,UGC',config:{ctype:'both',award:'优胜 = 专属服装 + 2 月名誉院长 + 进园全免费'}},
+  {name:'亲子自然课堂',type:'yanxue',emoji:'🌿',desc:'家长与孩子共同完成的自然观察与手作课堂',location:'园区亲子教室',capacity:'20 组家庭/场',deadline:'活动前 2 天',rules:'1 名成人限带 2 名儿童；须监护人陪同',tags:'亲子,家庭,手作',config:{sessions:['周六 上午','周日 上午']}},
+  {name:'夜观昆虫',type:'yanxue',emoji:'🦗',desc:'夜间园区昆虫观察，配备向导讲解',location:'园区湿地步道',capacity:'15 人/场',deadline:'活动当天下午',rules:'需自备手电；未成年须监护人陪同',tags:'夜观,户外,科普',config:{sessions:['周五 19:30','周六 19:30']}},
+  {name:'自然笔记营',type:'yanxue',emoji:'📝',desc:'用画笔记录自然，专业老师带队',location:'园区东门自然教室',capacity:'25 人/场',deadline:'活动前 1 天',rules:'提供画材；建议自备素描本',tags:'绘画,自然教育',config:{sessions:['周日 下午']}},
+  {name:'农耕体验日',type:'mianpiao',emoji:'🌾',desc:'免费进园体验播种/采摘等农事活动',location:'园区农园',capacity:'100 人/日',deadline:'活动前 1 天',rules:'免费进园，农事体验材料包另付',tags:'农耕,体验,免票',config:{days:['本周六','本周日']}}
+];
+(function fillTpl(){const s=$('na-tpl');ACT_TEMPLATES.forEach((t,i)=>{const o=document.createElement('option');o.value=i;o.textContent=t.name;s.appendChild(o);});})();
+function refreshActType(){const t=$('na-type').value;['yanxue','mianpiao','dean','contest'].forEach(k=>{$('na-'+k).style.display=(t===k)?'block':'none';});}
+function fillFromTpl(){
+  const i=$('na-tpl').value;if(i===''){return;}
+  const t=ACT_TEMPLATES[+i];
+  $('na-type').value=t.type;$('na-title').value=t.title;$('na-desc').value=t.desc;$('na-emoji').value=t.emoji;$('na-location').value=t.location;$('na-capacity').value=t.capacity;$('na-deadline').value=t.deadline;$('na-rules').value=t.rules;$('na-tags').value=t.tags;
+  const c=t.config||{};
+  $('na-sessions').value=(c.sessions||[]).join('\n');
+  $('na-days').value=(c.days||[]).join('\n');
+  $('na-cands').value=(c.cands||[]).map(x=>`${x.name}|${x.emoji}|${x.bio}`).join('\n');
+  $('na-ctype').value=c.ctype||'both';$('na-award').value=c.award||'';
+  refreshActType();
+}
+function buildActConfig(type){
+  if(type==='yanxue')return{sessions:$('na-sessions').value.split('\n').map(s=>s.trim()).filter(Boolean)};
+  if(type==='mianpiao')return{days:$('na-days').value.split('\n').map(s=>s.trim()).filter(Boolean)};
+  if(type==='dean')return{cands:$('na-cands').value.split('\n').map(s=>s.trim()).filter(Boolean).map((line,i)=>{const p=line.split('|');return{id:'c'+(i+1),name:p[0]||('候选人'+(i+1)),emoji:p[1]||'🧑',bio:p[2]||''};})};
+  if(type==='contest')return{ctype:$('na-ctype').value,award:$('na-award').value};
+  return{};
+}
+$('na-type').addEventListener('change',refreshActType);
+$('na-tpl').addEventListener('change',fillFromTpl);
+refreshActType();
+
+async function toggleWinner(id){
+  if(MODE==='api'){const r=await api('/api/admin/winner',{workId:id});if(!r.ok){toast(r.error||'操作失败');return;}toast(r.work.isWinner?'已标为优胜 🏆':'已取消优胜');await loadData();return;}
+  const d=lsGet();const w=d.contests.find(c=>c.id===id);if(!w){toast('作品不存在');return;}w.isWinner=!w.isWinner;lsSet(d);await loadData();
+}
+
+async function verify(code){
+  code=(code||'').trim().toUpperCase();if(!code){toast('请输入凭证码');return;}
+  const r=await mutate('/api/admin/verify',{code});
+  if(!r.ok){toast(r.error||'核销失败');return;}
+  toast('✓ 核销成功：'+code);$('verifyCode').value='';await loadData();
+}
+function exportCsv(type){if(MODE==='api'){const a=document.createElement('a');a.href=`/api/export/${type}?token=${TOKEN}`;a.download=type+'.csv';a.click();toast('开始导出 '+type);}else{localExportCsv(type);}}
+function exportBookings(){
+  // 导出当前筛选结果（演示：直接调用全量接口即可，后端按 token 鉴权）
+  exportCsv('bookings');toast('导出预约（筛选在服务端全量，演示版导出全部）');
+}
+
+// 启动：探测 API
+(async function init(){
+  try{const r=await fetch('/api/ping');const j=await r.json();if(j.ok)MODE='api';}catch(e){MODE='local';}
+})();
+</script>
+</body>
+</html>
+
